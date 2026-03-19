@@ -9,7 +9,7 @@ namespace STMS.Tokens.TokenEntities.Contracts
     {
         protected TokenChildSet Children;
 
-        protected CTokenGroup(ITokenId _id, ChildMessage _parentMessanger) : base(_id, _parentMessanger) { }
+        protected CTokenGroup(ITokenId _id, ref ChildMessage _parentMessanger) : base(_id, ref _parentMessanger) { }
 
     }
 }

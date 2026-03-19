@@ -10,6 +10,7 @@ namespace STMS.Tokens.Id.Implentation
         public string Name { get; private set; }
 
         public static TokenId ROOT => new TokenId(NEXUS_ADRESS, NEXUS_ADRESS);
+        public static string NEXUS => NEXUS_ADRESS;
 
         protected string FullId;
 

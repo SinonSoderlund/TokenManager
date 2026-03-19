@@ -9,8 +9,8 @@ namespace STMS.Tokens.TokenEntities.Implementation
 {
     public class ManagedGroup : BtokenGroup
     {
-        public ManagedGroup(ITokenId _id, ChildMessage _parentMessanger) : base(_id, _parentMessanger) { }
-        public ManagedGroup(ITokenId _id, ChildMessage _parentMessanger, TokenChildSet _children) : base(_id, _parentMessanger, _children) { }
+        public ManagedGroup(ITokenId _id,ref ChildMessage _parentMessanger) : base(_id,ref _parentMessanger) { }
+        public ManagedGroup(ITokenId _id,ref ChildMessage _parentMessanger, TokenChildSet _children) : base(_id,ref _parentMessanger, _children) { }
 
 
         protected override void ConvertToManagedGroup()
@@ -20,7 +20,7 @@ namespace STMS.Tokens.TokenEntities.Implementation
 
         protected override void ConvertToStandardGroup()
         {
-            Communication.Outgoing = ITokenCommunicationsFactory<CTokenChild>.SenderReceiverSwapReturnCarrier(Communication.Incomming, _payload: new TokenGroup(ThisId, parentListener, Children));
+            Communication.Outgoing = ITokenCommunicationsFactory<CTokenChild>.SenderReceiverSwapReturnCarrier(Communication.Incomming, _payload: new TokenGroup(ThisId, ref parentListener, Children));
         }
 
     }

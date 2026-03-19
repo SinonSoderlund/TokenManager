@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using STMS.Tokens.Communication;
+using STMS.Tokens.Communication.Implementation;
 using STMS.Tokens.Communication.Interfaces;
+using STMS.Tokens.Id.Implentation;
 using STMS.Tokens.Id.Interfaces;
 using STMS.Tokens.TokenEntities.Communication;
 using STMS.Tokens.TokenEntities.Communication.Factory;
-using STMS.Tokens.TokenEntities.Contracts;
 using STMS.Tokens.TokenEntities.Factory;
 using STMS.Tokens.TokenEntities.Interfaces;
 
@@ -14,7 +15,7 @@ namespace STMS.Tokens.TokenEntities.Utilites
     public class TokenChildSet
     {
         private SortedList<ITokenId,ITokenChild> _childList { get; set;}
-        private ChildMessage _callChildren { get; set; }
+        private ChildMessage _callChildren;
         private ITokenId _ownerId;
 
         public TokenChildSet(ITokenId _id)
@@ -56,7 +57,7 @@ namespace STMS.Tokens.TokenEntities.Utilites
 
         private ITokenMessage _CreateChildAndRecall(ITokenCommunication _message)
         {
-            ITokenChild _newChild = TokenFactory.CreateChild();
+            ITokenChild _newChild = TokenFactory.CreateChild(_ownerId, _message.Receipient, ref _callChildren);
             _childList.Add(_newChild.ThisId, _newChild);
             return SendMessageDown(_message);
         }

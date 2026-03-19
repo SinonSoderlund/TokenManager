@@ -12,10 +12,13 @@ namespace STMS.Tokens.TokenEntities.Contracts
     public abstract class CTokenChild : ITokenChild
     {
 
-        protected ChildMessage parentListener {get; private set;}
-        protected bool hasToken {get; private set;}
+        protected ChildMessage parentListener;
+        protected bool hasToken { get; private set; }
 
-        public ITokenId ThisId {get; private set;}
+        public ITokenId ThisId { get; private set; }
+
+        public bool HasToken => hasToken;
+
         protected CommuncationsPackage Communication;
 
 
@@ -25,17 +28,16 @@ namespace STMS.Tokens.TokenEntities.Contracts
             throw new NotImplementedException();
         }
 
-        public CTokenChild(ITokenId _id, ChildMessage _parentMessanger)
+        public CTokenChild(ITokenId _id, ref ChildMessage _parentMessanger)
         {
             parentListener = _parentMessanger;
             ThisId = _id;
             hasToken = false;
-            parentListener += _ParentCallResponse;
+            _parentMessanger += _ParentCallResponse;
         }
 
         protected abstract ITokenMessage _ParentCallResponse(ITokenCommunication _message);
 
-        //TODO Work in tokencommunication
         protected virtual void _OnDelete()
         {
             parentListener -= _ParentCallResponse;
@@ -46,5 +48,5 @@ namespace STMS.Tokens.TokenEntities.Contracts
         {
             hasToken = _value;
         }
-    }   
+    }
 }

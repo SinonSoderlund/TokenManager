@@ -9,14 +9,14 @@ namespace STMS.Tokens.TokenEntities.Implementation
 {
     public class TokenGroup : BtokenGroup
     {
-        public TokenGroup(ITokenId _id, ChildMessage _parentMessanger) : base(_id, _parentMessanger){}
-        public TokenGroup(ITokenId _id, ChildMessage _parentMessanger, TokenChildSet _children) : base(_id, _parentMessanger, _children) { }
+        public TokenGroup(ITokenId _id,ref ChildMessage _parentMessanger) : base(_id,ref _parentMessanger){}
+        public TokenGroup(ITokenId _id,ref ChildMessage _parentMessanger, TokenChildSet _children) : base(_id, ref _parentMessanger, _children) { }
 
 
 
         protected override void ConvertToManagedGroup()
         {
-            Communication.Outgoing = ITokenCommunicationsFactory<CTokenChild>.SenderReceiverSwapReturnCarrier(Communication.Incomming, _payload: new ManagedGroup(ThisId, parentListener, Children)); 
+            Communication.Outgoing = ITokenCommunicationsFactory<CTokenChild>.SenderReceiverSwapReturnCarrier(Communication.Incomming, _payload: new ManagedGroup(ThisId,ref parentListener, Children)); 
         }
 
         protected override void ConvertToStandardGroup()

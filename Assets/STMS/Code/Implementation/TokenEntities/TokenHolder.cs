@@ -11,7 +11,7 @@ namespace STMS.Tokens.TokenEntities.Implementation
     public class TokenHolder : BTokenChild
     {
 
-        public TokenHolder(ITokenId _id, ChildMessage _parentMessanger) : base(_id, _parentMessanger) { }
+        public TokenHolder(ITokenId _id, ref ChildMessage _parentMessanger) : base(_id, ref _parentMessanger) { }
 
         protected override void AddManagedGroup()
         {

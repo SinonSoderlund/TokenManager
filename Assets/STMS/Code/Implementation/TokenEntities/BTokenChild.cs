@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using Mono.Cecil.Cil;
 using STMS.Tokens.Communication.Interfaces;
 using STMS.Tokens.Id.Interfaces;
 using STMS.Tokens.Id.Utilty;
@@ -20,7 +19,7 @@ namespace STMS.Tokens.TokenEntities.Implementation
         public static bool operator false(BTokenChild _this) => _this.hasToken == false;
         private TokenCommunicationCaseHandler _fullMatch, _groupMatch;
 
-        public BTokenChild(ITokenId _id, ChildMessage _parentMessanger) : base(_id, _parentMessanger)
+        public BTokenChild(ITokenId _id, ref ChildMessage _parentMessanger) : base(_id, ref _parentMessanger)
         {
             _fullMatch = new TokenCommunicationCaseHandler(ReflectAsCarrier, ReflectMessageWithStatus, OnTokenStateChange, OnTokenStateChange,
                     OnTokenStateChange, _OnDelete, _GroupEmptyIsInvalid, OnGroupDelete, ConvertToManagedGroup, ConvertToStandardGroup, AddManagedGroup);
@@ -111,9 +110,11 @@ namespace STMS.Tokens.TokenEntities.Implementation
                     return hasToken;
                 case Tokens.Communication.ETokenCommands.Exists:
                     return true;
-                    case Tokens.Communication.ETokenCommands.TransferToken:
+                case Tokens.Communication.ETokenCommands.GiveToken:
                     return true;
-                    case Tokens.Communication.ETokenCommands.RetractToken:
+                case Tokens.Communication.ETokenCommands.TransferToken:
+                    return true;
+                case Tokens.Communication.ETokenCommands.RetractToken:
                     return true;
                 default:
                     throw new ArgumentException("should never happen");

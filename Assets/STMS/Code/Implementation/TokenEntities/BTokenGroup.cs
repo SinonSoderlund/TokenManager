@@ -10,11 +10,11 @@ namespace STMS.Tokens.TokenEntities.Implementation
 {
     public abstract class BtokenGroup : CTokenGroup
     {
-        protected BtokenGroup(ITokenId _id, ChildMessage _parentMessanger) : base(_id, _parentMessanger)
+        protected BtokenGroup(ITokenId _id,ref ChildMessage _parentMessanger) : base(_id,ref _parentMessanger)
         {
             Children = new TokenChildSet(_id);
         }
-        protected BtokenGroup(ITokenId _id, ChildMessage _parentMessanger, TokenChildSet _children) : base(_id, _parentMessanger)
+        protected BtokenGroup(ITokenId _id, ref ChildMessage _parentMessanger, TokenChildSet _children) : base(_id, ref _parentMessanger)
         {
             Children = _children;
         }

@@ -1,14 +1,11 @@
-using System.Data;
 using STMS.Tokens.Communication;
 using STMS.Tokens.Communication.Implementation;
 using STMS.Tokens.Communication.Interfaces;
-using STMS.Tokens.Id.Implentation;
 using STMS.Tokens.Id.Interfaces;
 
 namespace STMS.Tokens.TokenEntities.Communication.Factory
 {
-    //TODO: might not be a good solution, might need looking over
-    public static class ITokenCommunicationsFactory<T> where T: class
+    public static class ITokenCommunicationsFactory<T> where T : class
     {
 
         /// <summary>
@@ -22,19 +19,19 @@ namespace STMS.Tokens.TokenEntities.Communication.Factory
         /// <returns>if youre returning a more specied type than itokencommunication, 'as cast' the return value </returns>
         public static ITokenCommunication GetITokenCommunication(ETokenCommands _command, bool _status, ITokenId? _receipient = null, T? _payload = null, ITokenId _sender = null)
         {
-            if(_payload is null)
+            if (_payload is null)
             {
-                if(_sender is null)
+                if (_sender is null)
                     return new TokenCommunication(_receipient, _command, _status);
                 else
                     return new TokenMessage(_receipient, _command, _status, _sender);
             }
             else if (_sender is null)
-                return new TokenRequest<T>(_receipient,_command, _status, _payload);
+                return new TokenRequest<T>(_receipient, _command, _status, _payload);
 
-            return new TokenCarrier<T>(_receipient, _command ,_status, _payload, _sender);
+            return new TokenCarrier<T>(_receipient, _command, _status, _payload, _sender);
         }
-        
+
         /// <summary>
         /// Modifier constructor, merges base object with supplied replacement values
         /// </summary>
@@ -46,7 +43,19 @@ namespace STMS.Tokens.TokenEntities.Communication.Factory
         /// <returns>merged data object</returns>
         public static ITokenRequest<T> ModifyRequest(TokenRequest<T> _base, ITokenId? _receipient = null, ETokenCommands? _command = null, bool? _statusResponse = null, T? _payload = null)
         {
-            return new TokenRequest<T>(_base,  _receipient ,  _command,  _statusResponse, _payload);
+            return new TokenRequest<T>(_base, _receipient, _command, _statusResponse, _payload);
+        }
+
+        public static ITokenRequest<T> CopyRequest(ITokenCommunication _base)
+        {
+            if (_base is TokenRequest<T> _baseRequest)
+                return new TokenRequest<T>(_baseRequest);
+            else if (_base is TokenMessage _baseMessage)
+            {
+                return new TokenRequest<T>(_baseMessage);
+            }
+            else
+                return new TokenRequest<T>(_base);
         }
 
         /// <summary>
@@ -60,7 +69,7 @@ namespace STMS.Tokens.TokenEntities.Communication.Factory
         /// <returns>merged data object</returns>
         public static ITokenMessage ModifyMessage(TokenMessage _base, ITokenId? _receipient = null, ETokenCommands? _command = null, bool? _statusResponse = null, ITokenId? _sender = null)
         {
-            return new TokenMessage( _base,  _receipient,  _command,  _statusResponse,  _sender);
+            return new TokenMessage(_base, _receipient, _command, _statusResponse, _sender);
         }
 
         /// <summary>
@@ -86,9 +95,9 @@ namespace STMS.Tokens.TokenEntities.Communication.Factory
         /// <param name="_payload">optional, new payload data</param>
         /// <param name="_sender">optional, new sender adress</param>
         /// <returns>merged data object</returns>
-        public static ITokenCarrier<T> ModifyCarrier(TokenCarrier<T> _base, ITokenId _receipient = null, ETokenCommands? _command = null, bool? _statusResponse = null, T? _payload = null,  ITokenId? _sender = null)
+        public static ITokenCarrier<T> ModifyCarrier(TokenCarrier<T> _base, ITokenId _receipient = null, ETokenCommands? _command = null, bool? _statusResponse = null, T? _payload = null, ITokenId? _sender = null)
         {
-            return new TokenCarrier<T>(_base,  _receipient,  _command, _statusResponse, _payload,  _sender);
+            return new TokenCarrier<T>(_base, _receipient, _command, _statusResponse, _payload, _sender);
         }
 
         /// <summary>
@@ -100,7 +109,7 @@ namespace STMS.Tokens.TokenEntities.Communication.Factory
         /// <returns>merged data object</returns>
         public static ITokenMessage SenderReceiverSwapModifyMessage(TokenMessage _base, ETokenCommands? _command = null, bool? _statusResponse = null)
         {
-            return new TokenMessage( _base,  _base.Sender,  _command,  _statusResponse,  _base.Receipient);
+            return new TokenMessage(_base, _base.Sender, _command, _statusResponse, _base.Receipient);
         }
 
         /// <summary>
@@ -113,7 +122,7 @@ namespace STMS.Tokens.TokenEntities.Communication.Factory
         /// <returns>merged data object</returns>
         public static ITokenCarrier<T> SenderReceiverSwapModifyCarrier(TokenCarrier<T> _base, ETokenCommands? _command = null, bool? _statusResponse = null, T? _payload = null)
         {
-            return new TokenCarrier<T>(_base,  _base.Sender,  _command, _statusResponse, _payload,  _base.Receipient);
+            return new TokenCarrier<T>(_base, _base.Sender, _command, _statusResponse, _payload, _base.Receipient);
         }
 
         /// <summary>
@@ -126,11 +135,10 @@ namespace STMS.Tokens.TokenEntities.Communication.Factory
         /// <returns>merged data object</returns>
         public static ITokenCarrier<T> SenderReceiverSwapReturnCarrier(ITokenCommunication _base, ETokenCommands? _command = null, bool? _statusResponse = null, T? _payload = null)
         {
-            return CommunicationToCarrier(_base,  null,  _command is null ? _base.Command : _command.Value, _statusResponse is null ? _base.StatusResponse :  _statusResponse.Value, _payload,  _base.Receipient);
+            return CommunicationToCarrier(_base, null, _command is null ? _base.Command : _command.Value, _statusResponse is null ? _base.StatusResponse : _statusResponse.Value, _payload, _base.Receipient);
         }
 
-        //TODO maybe this doesnt make sense and the issue was just the overload was asking for a concrete class instead of interface, dont have mental capacity to check it out rn though
-        private static ITokenCarrier<T> CommunicationToCarrier(ITokenCommunication _base, ITokenId _receipient = null, ETokenCommands? _command = null, bool? _statusResponse = null, T? _payload = null,  ITokenId? _sender = null)
+        private static ITokenCarrier<T> CommunicationToCarrier(ITokenCommunication _base, ITokenId _receipient = null, ETokenCommands? _command = null, bool? _statusResponse = null, T? _payload = null, ITokenId? _sender = null)
         {
             return new TokenCarrier<T>(new TokenRequest<T>(_base, _receipient, _command, _statusResponse, _payload), _sender);
         }
@@ -144,7 +152,7 @@ namespace STMS.Tokens.TokenEntities.Communication.Factory
         /// <returns>merged data object</returns>
         public static ITokenMessage SenderReceiverSwapReturnMessage(ITokenCommunication _base, ETokenCommands? _command = null, bool? _statusResponse = null)
         {
-            return new TokenMessage(null, _command is null ? _base.Command : _command.Value, _statusResponse is null ? _base.StatusResponse :  _statusResponse.Value, _base.Receipient);
+            return new TokenMessage(null, _command is null ? _base.Command : _command.Value, _statusResponse is null ? _base.StatusResponse : _statusResponse.Value, _base.Receipient);
         }
 
         /// <summary>

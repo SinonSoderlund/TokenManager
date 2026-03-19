@@ -32,7 +32,7 @@ namespace STMS.Tokens.TokenEntities.Implementation
         {
             _communication = new CommuncationsPackage(_request);
             _caseHandler.HandleCommunication(_communication.Incomming.Command);
-            return _communication.Outgoing as ITokenRequest<ITokenChild>;
+            return ITokenCommunicationsFactory<ITokenChild>.CopyRequest(_communication.Outgoing);
         }
 
         private void _SendMessage()
