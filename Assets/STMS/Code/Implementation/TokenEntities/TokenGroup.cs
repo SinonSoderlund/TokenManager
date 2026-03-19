@@ -14,12 +14,12 @@ namespace STMS.Tokens.TokenEntities.Implementation
 
 
 
-        protected override ITokenCarrier<CTokenChild> ConvertToManagedGroup(ITokenCommunication _message)
+        protected override void ConvertToManagedGroup()
         {
-            return ITokenCommunicationsFactory<CTokenChild>.SenderReceiverSwapReturnCarrier(_message, _payload: new ManagedGroup(ThisId, parentListener, Children)); 
+            Communication.Outgoing = ITokenCommunicationsFactory<CTokenChild>.SenderReceiverSwapReturnCarrier(Communication.Incomming, _payload: new ManagedGroup(ThisId, parentListener, Children)); 
         }
 
-        protected override ITokenCarrier<CTokenChild> ConvertToStandardGroup(ITokenCommunication _message)
+        protected override void ConvertToStandardGroup()
         {
             throw new System.InvalidOperationException("This object is already a standard group");;
         }

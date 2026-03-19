@@ -6,62 +6,64 @@ using STMS.Tokens.TokenEntities.Interfaces;
 using STMS.Tokens.Communication;
 using STMS.Tokens.Id.Interfaces;
 using STMS.Tokens.TokenEntities.Communication;
-
-public class TokenHolder : BTokenChild
+namespace STMS.Tokens.TokenEntities.Implementation
 {
-
-    public TokenHolder(ITokenId _id, ChildMessage _parentMessanger) : base(_id, _parentMessanger){}
-
-    protected override ITokenMessage AddManagedGroup(ITokenCarrier<ITokenChild> _newGroup)
+    public class TokenHolder : BTokenChild
     {
-        throw new InvalidOperationException("should never happen");
-    }
 
-    protected override ITokenCarrier<CTokenChild> ConvertToManagedGroup(ITokenCommunication _message)
-    {
-        throw new InvalidOperationException("should never happen");
-    }
+        public TokenHolder(ITokenId _id, ChildMessage _parentMessanger) : base(_id, _parentMessanger) { }
 
-    protected override ITokenCarrier<CTokenChild> ConvertToStandardGroup(ITokenCommunication _message)
-    {
-        throw new InvalidOperationException("should never happen");
-    }
+        protected override void AddManagedGroup()
+        {
+            throw new InvalidOperationException("should never happen");
+        }
 
-    protected override ITokenMessage OnGroupDelete(ITokenCommunication _message)
-    {
-        return _OnDelete(_message);
-    }
+        protected override void ConvertToManagedGroup()
+        {
+            throw new InvalidOperationException("should never happen");
+        }
 
-    protected override ITokenMessage OnTokenStateChange(ITokenCommunication _message, bool _fullIdMatch = true)
-    {
-            if (_fullIdMatch)
+        protected override void ConvertToStandardGroup()
+        {
+            throw new InvalidOperationException("should never happen");
+        }
+
+        protected override void OnGroupDelete()
+        {
+            _OnDelete();
+        }
+
+        protected override void OnTokenStateChange()
+        {
+            if (Communication.MatchStatus == Id.Utilty.TokenIdMatchStatus.Full)
             {
-                switch (_message.Command)
+                switch (Communication.Incomming.Command)
                 {
                     case ETokenCommands.GiveToken:
                     case ETokenCommands.TransferToken:
                         _SetToken(true);
-                        return RepeatDownstream(_message);
+                        ReflectMessageWithStatus();
+                        return;
 
                     case ETokenCommands.RetractToken:
                         _SetToken(false);
-                        return RepeatDownstream(_message);
+                        ReflectMessageWithStatus();
+                        return;
 
                     default:
                         throw new ArgumentException("should never happen");
                 }
             }
-            else if (_message.Command == ETokenCommands.TransferToken)
+            else if (Communication.Incomming.Command == ETokenCommands.TransferToken)
             {
                 _SetToken(false);
-                return RepeatDownstream(_message);
-
             }
             else throw new InvalidOperationException("should never happen");
-    }
+        }
 
-    protected override ITokenMessage RepeatDownstream(ITokenCommunication _message)
-    {
-        throw new InvalidOperationException("should never happen");
+        protected override void RepeatDownstream()
+        {
+            throw new InvalidOperationException("should never happen");
+        }
     }
 }

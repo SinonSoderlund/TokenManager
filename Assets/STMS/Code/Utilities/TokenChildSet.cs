@@ -28,7 +28,7 @@ namespace STMS.Tokens.TokenEntities.Utilites
         {
             ITokenMessage _response = _callChildren?.Invoke(_message);
 
-            if(_response is null)
+            if(_response is null && (_message.Command != ETokenCommands.DeleteHolder || _message.Command != ETokenCommands.GroupDelete))
             {
                 _response = _CreateChildAndRecall(_message);
             }
@@ -49,6 +49,11 @@ namespace STMS.Tokens.TokenEntities.Utilites
             else return _CallbackEmpty(false);
         }
 
+        public void SwapInstance(ITokenCarrier<ITokenChild> _message)
+        {
+            _childList[_message.Sender] = _message.Payload;
+        }
+
         private ITokenMessage _CreateChildAndRecall(ITokenCommunication _message)
         {
             ITokenChild _newChild = TokenFactory.CreateChild();
@@ -56,9 +61,13 @@ namespace STMS.Tokens.TokenEntities.Utilites
             return SendMessageDown(_message);
         }
 
+        
+
         private ITokenMessage _CallbackEmpty(bool _status)
         {
             return ITokenCommunicationsFactory<object>.GetITokenCommunication(ETokenCommands.GroupEmpty,_status) as ITokenMessage;
         }
+
+        
     }
 }

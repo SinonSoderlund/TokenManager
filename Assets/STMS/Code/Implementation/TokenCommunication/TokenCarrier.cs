@@ -25,6 +25,10 @@ namespace STMS.Tokens.Communication.Implementation
         {
             Sender = _sender;
         }
+        public TokenCarrier(ITokenCommunication _base, ITokenId _receipient = null, ETokenCommands? _command = null, bool? _statusResponse = null, T? _payload = null,  ITokenId? _sender = null) : base(_base, _receipient, _command, _statusResponse, _payload)
+        {
+            Sender = _sender;
+        }
 
     }
 }

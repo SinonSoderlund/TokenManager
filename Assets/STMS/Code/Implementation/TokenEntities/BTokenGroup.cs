@@ -19,46 +19,58 @@ namespace STMS.Tokens.TokenEntities.Implementation
             Children = _children;
         }
 
-        protected override ITokenMessage OnGroupDelete(ITokenCommunication _message)
+        protected override void OnGroupDelete()
         {
-            RepeatDownstream(_message);
+            RepeatDownstream();
             Children = null;
-            return _OnDelete(_message);
+            _OnDelete();
         }
 
-        protected override ITokenMessage RepeatDownstream(ITokenCommunication _message)
+        protected override void RepeatDownstream()
         {
-            return Children.SendMessageDown(_message);
-        }
-        protected override ITokenMessage AddManagedGroup(ITokenCarrier<ITokenChild> _newGroup)
-        {
-            return Children.AddChild(_newGroup);
-        }
-
-        protected override ITokenMessage OnTokenStateChange(ITokenCommunication _message, bool _fullIdMatch = true)
-        {
-            if (_fullIdMatch)
+            Communication.Outgoing = Children.SendMessageDown(Communication.Incomming);
+            if(Communication.Outgoing.Command == Tokens.Communication.ETokenCommands.DeleteHolder)
             {
-                switch (_message.Command)
+                ITokenMessage _message = Children.DeleteChild(Communication.Outgoing.Sender);
+                if(_message.StatusResponse == true)
+                {
+                    Children = null;
+                    _OnDelete();
+                    Communication.Outgoing = _message;
+                }
+            }
+        }
+        protected override void AddManagedGroup()
+        {
+            Communication.Outgoing = Children.AddChild(Communication.Incomming as ITokenCarrier<ITokenChild>);
+        }
+
+        protected override void OnTokenStateChange()
+        {
+            if (Communication.MatchStatus == Id.Utilty.TokenIdMatchStatus.Full)
+            {
+                switch (Communication.Incomming.Command)
                 {
                     case Tokens.Communication.ETokenCommands.GiveToken:
                     case Tokens.Communication.ETokenCommands.TransferToken:
                         _SetToken(true);
-                        return RepeatDownstream(_message);
+                        RepeatDownstream();
+                        return;
 
                     case Tokens.Communication.ETokenCommands.RetractToken:
                         _SetToken(false);
-                        return RepeatDownstream(_message);
+                        RepeatDownstream();
+                        return;
 
                     default:
                         throw new ArgumentException("should never happen");
                 }
             }
-            else if (_message.Command == Tokens.Communication.ETokenCommands.TransferToken)
+            else if (Communication.Incomming.Command == Tokens.Communication.ETokenCommands.TransferToken)
             {
                 _SetToken(false);
-                return RepeatDownstream(_message);
-
+                RepeatDownstream();
+                return;
             }
             else throw new ArgumentException("should never happen");
         }

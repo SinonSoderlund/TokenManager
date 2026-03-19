@@ -1,5 +1,4 @@
 using STMS.Tokens.Communication.Interfaces;
-using STMS.Tokens.Id.Contracts;
 using STMS.Tokens.Id.Interfaces;
 
 namespace STMS.Tokens.Communication.Implementation

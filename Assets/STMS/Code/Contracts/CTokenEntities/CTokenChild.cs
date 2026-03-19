@@ -1,9 +1,5 @@
-
-using Codice.CM.Common;
 using STMS.Tokens.Communication;
-using STMS.Tokens.Communication.Implementation;
 using STMS.Tokens.Communication.Interfaces;
-using STMS.Tokens.Id.Contracts;
 using STMS.Tokens.Id.Interfaces;
 using STMS.Tokens.TokenEntities.Communication;
 using STMS.Tokens.TokenEntities.Communication.Factory;
@@ -20,6 +16,7 @@ namespace STMS.Tokens.TokenEntities.Contracts
         protected bool hasToken {get; private set;}
 
         public ITokenId ThisId {get; private set;}
+        protected CommuncationsPackage Communication;
 
 
 
@@ -39,10 +36,10 @@ namespace STMS.Tokens.TokenEntities.Contracts
         protected abstract ITokenMessage _ParentCallResponse(ITokenCommunication _message);
 
         //TODO Work in tokencommunication
-        protected virtual ITokenMessage _OnDelete(ITokenCommunication _message)
+        protected virtual void _OnDelete()
         {
             parentListener -= _ParentCallResponse;
-            return ITokenCommunicationsFactory<object>.GetITokenCommunication(ETokenCommands.DeleteHolder, true, _sender: ThisId) as ITokenMessage;
+            Communication.Outgoing = ITokenCommunicationsFactory<object>.GetITokenCommunication(ETokenCommands.DeleteHolder, true, _sender: ThisId) as ITokenMessage;
         }
 
         protected void _SetToken(bool _value)

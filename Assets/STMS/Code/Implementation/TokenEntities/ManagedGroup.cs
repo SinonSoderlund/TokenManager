@@ -13,14 +13,14 @@ namespace STMS.Tokens.TokenEntities.Implementation
         public ManagedGroup(ITokenId _id, ChildMessage _parentMessanger, TokenChildSet _children) : base(_id, _parentMessanger, _children) { }
 
 
-        protected override ITokenCarrier<CTokenChild> ConvertToManagedGroup(ITokenCommunication _message)
+        protected override void ConvertToManagedGroup()
         {
             throw new System.InvalidOperationException("This object is already a managed group"); ;
         }
 
-        protected override ITokenCarrier<CTokenChild> ConvertToStandardGroup(ITokenCommunication _message)
+        protected override void ConvertToStandardGroup()
         {
-            return ITokenCommunicationsFactory<CTokenChild>.SenderReceiverSwapReturnCarrier(_message, _payload: new TokenGroup(ThisId, parentListener, Children));
+            Communication.Outgoing = ITokenCommunicationsFactory<CTokenChild>.SenderReceiverSwapReturnCarrier(Communication.Incomming, _payload: new TokenGroup(ThisId, parentListener, Children));
         }
 
     }

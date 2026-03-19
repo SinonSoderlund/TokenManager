@@ -6,5 +6,8 @@ namespace STMS.Tokens.Id.Interfaces
     {
         string GUID { get; }
         string Name { get; }
+
+        public ITokenId TargetAsNexus();
+        public ITokenId TargetGroup();
     }
 }

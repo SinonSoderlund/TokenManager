@@ -1,10 +1,12 @@
 using System;
 using System.ComponentModel;
+using Mono.Cecil.Cil;
 using STMS.Tokens.Communication.Interfaces;
 using STMS.Tokens.Id.Interfaces;
 using STMS.Tokens.Id.Utilty;
 using STMS.Tokens.TokenEntities.Communication;
 using STMS.Tokens.TokenEntities.Communication.Factory;
+using STMS.Tokens.TokenEntities.CommunicationHandlers;
 using STMS.Tokens.TokenEntities.Contracts;
 using STMS.Tokens.TokenEntities.Interfaces;
 
@@ -12,10 +14,20 @@ namespace STMS.Tokens.TokenEntities.Implementation
 {
     public abstract class BTokenChild : CTokenChild
     {
-        public BTokenChild(ITokenId _id, ChildMessage _parentMessanger) : base(_id, _parentMessanger) { }
+
 
         public static bool operator true(BTokenChild _this) => _this.hasToken == true;
         public static bool operator false(BTokenChild _this) => _this.hasToken == false;
+        private TokenCommunicationCaseHandler _fullMatch, _groupMatch;
+
+        public BTokenChild(ITokenId _id, ChildMessage _parentMessanger) : base(_id, _parentMessanger)
+        {
+            _fullMatch = new TokenCommunicationCaseHandler(ReflectAsCarrier, ReflectMessageWithStatus, OnTokenStateChange, OnTokenStateChange,
+                    OnTokenStateChange, _OnDelete, _GroupEmptyIsInvalid, OnGroupDelete, ConvertToManagedGroup, ConvertToStandardGroup, AddManagedGroup);
+
+            _groupMatch = new TokenCommunicationCaseHandler(RepeatDownstream, RepeatDownstream, OnTokenStateChange, RepeatDownstream, RepeatDownstream,
+            RepeatDownstream, _GroupEmptyIsInvalid, _DoNothing, _DoNothing, _DoNothing, _DoNothing);
+        }
 
 
         /// <summary>
@@ -26,135 +38,86 @@ namespace STMS.Tokens.TokenEntities.Implementation
         /// <exception cref="InvalidEnumArgumentException">Group empty is an upstream only value</exception>
         protected override ITokenMessage _ParentCallResponse(ITokenCommunication _message)
         {
-            switch (ThisId.GetMatchStatus(_message.Receipient))
+            Communication = new CommuncationsPackage(_message, ThisId.GetMatchStatus(_message.Receipient));
+            switch (Communication.MatchStatus)
             {
                 case TokenIdMatchStatus.Full:
-                    switch (_message.Command)
-                    {
-                        case Tokens.Communication.ETokenCommands.Exists:
-                            return ReflectAsCarrier(_message, true, this);
-
-                        case Tokens.Communication.ETokenCommands.HasToken:
-                            return ReflectMessageWithStatus(_message, hasToken);
-
-                        case Tokens.Communication.ETokenCommands.TransferToken:
-                            return OnTokenStateChange(_message);
-
-                        case Tokens.Communication.ETokenCommands.RetractToken:
-                            return OnTokenStateChange(_message);
-
-                        case Tokens.Communication.ETokenCommands.GiveToken:
-                            return OnTokenStateChange(_message);
-
-                        case Tokens.Communication.ETokenCommands.DeleteHolder:
-                            return _OnDelete(_message);
-
-                        case Tokens.Communication.ETokenCommands.GroupEmpty:
-                            throw new InvalidEnumArgumentException("Group empty is not a valid downstream-facing message");
-
-                        case Tokens.Communication.ETokenCommands.GroupDelete:
-                            return OnGroupDelete(_message);
-
-                        case Tokens.Communication.ETokenCommands.ManageGroup:
-                            return ConvertToManagedGroup(_message);
-
-                        case Tokens.Communication.ETokenCommands.RemoveManagedGroup:
-                            return ConvertToStandardGroup(_message);
-
-                        case Tokens.Communication.ETokenCommands.ManagedGroupCarrier:
-                            return AddManagedGroup(_message as ITokenCarrier<ITokenChild>);
-
-                        default:
-                            throw new NotImplementedException("unhandled case in BTokenChild");
-                    }
+                    _fullMatch.HandleCommunication(Communication.Incomming.Command);
+                    break;
                 case TokenIdMatchStatus.GroupIdOnly:
-                    switch (_message.Command)
-                    {
-                        case Tokens.Communication.ETokenCommands.Exists:
-                            return RepeatDownstream(_message);
-
-                        case Tokens.Communication.ETokenCommands.HasToken:
-                            return RepeatDownstream(_message);
-
-                        case Tokens.Communication.ETokenCommands.TransferToken:
-                            return OnTokenStateChange(_message, false);
-
-                        case Tokens.Communication.ETokenCommands.RetractToken:
-                            return RepeatDownstream(_message);
-
-                        case Tokens.Communication.ETokenCommands.GiveToken:
-                            return RepeatDownstream(_message);
-
-                        case Tokens.Communication.ETokenCommands.DeleteHolder:
-                            return RepeatDownstream(_message);
-
-                        case Tokens.Communication.ETokenCommands.GroupEmpty:
-                            throw new InvalidEnumArgumentException("Group empty is not a valid downstream-facing message");
-                        case Tokens.Communication.ETokenCommands.GroupDelete:
-                            break;
-                        case Tokens.Communication.ETokenCommands.ManageGroup:
-                            break;
-                        case Tokens.Communication.ETokenCommands.RemoveManagedGroup:
-                            break;
-                        case Tokens.Communication.ETokenCommands.ManagedGroupCarrier:
-                            break;
-                        default:
-                            throw new NotImplementedException("unhandled case in BTokenChild");
-                    }
+                    _groupMatch.HandleCommunication(Communication.Incomming.Command);
                     break;
                 case TokenIdMatchStatus.None:
                     break;
                 default:
                     throw new NotImplementedException("unhandled case in BTokenChild");
             }
-            return null;
+            return Communication.Outgoing;
         }
 
         /// <summary>
         /// Returns incomming communication with correct sender and updated status response
         /// </summary>
-        /// <param name="_message">message from parent</param>
-        /// <param name="_status">the command status response</param>
-        /// <returns>message for parent</returns>
-        protected ITokenMessage ReflectMessageWithStatus(ITokenCommunication _message, bool _status)
+        /// <returns></returns>
+        protected void ReflectMessageWithStatus()
         {
-            return ITokenCommunicationsFactory<object>.SenderReceiverSwapReturnMessage(_message, _statusResponse: _status);
+            Communication.Outgoing = ITokenCommunicationsFactory<object>.SenderReceiverSwapReturnMessage(Communication.Incomming, _statusResponse: GetStatus());
         }
 
-        protected ITokenCarrier<ITokenChild> ReflectAsCarrier(ITokenCommunication _message, bool _status, ITokenChild _payload)
+        protected void ReflectAsCarrier()
         {
-            return ITokenCommunicationsFactory<ITokenChild>.SenderReceiverSwapReturnCarrier(_message, _statusResponse: _status, _payload: _payload);
+            Communication.Outgoing = ITokenCommunicationsFactory<ITokenChild>.SenderReceiverSwapReturnCarrier(Communication.Incomming, _statusResponse: GetStatus(), _payload: this);
         }
+
+        private void _GroupEmptyIsInvalid()
+        {
+            throw new ArgumentException("Group empty is not a valid downstream-facing message");
+        }
+        private void _DoNothing() { }
 
         /// <summary>
-        /// Repeats paren message to children, with apropiate effects for the given command.
+        /// Repeats parent message to children, with apropriate effects for the given command.
         /// </summary>
-        /// <param name="_message">parent message</param>
-        /// <returns>child repsonse</returns>
-        protected abstract ITokenMessage RepeatDownstream(ITokenCommunication _message);
+        /// <returns></returns>
+        protected abstract void RepeatDownstream();
 
         /// <summary>
         /// Called on group delete command
         /// </summary>
-        protected abstract ITokenMessage OnGroupDelete(ITokenCommunication _message);
+        protected abstract void OnGroupDelete();
 
         /// Called on group managed conversion command
-        protected abstract ITokenCarrier<CTokenChild> ConvertToManagedGroup(ITokenCommunication _message);
+        protected abstract void ConvertToManagedGroup();
 
         /// Called on group demanage conversion command
-        protected abstract ITokenCarrier<CTokenChild> ConvertToStandardGroup(ITokenCommunication _message);
+        protected abstract void ConvertToStandardGroup();
 
         /// <summary>
         /// Called when parent sends in group to be added to child list
         /// </summary>
-        protected abstract ITokenMessage AddManagedGroup(ITokenCarrier<ITokenChild> _newGroup);
+        protected abstract void AddManagedGroup();
 
         /// <summary>
         /// Called when the token state is commanded to change
         /// </summary>
-        /// <param name="_message">message from parent</param>
-        /// <returns>child response messages</returns>
-        protected abstract ITokenMessage OnTokenStateChange(ITokenCommunication _message, bool _fullIdMatch = true);
+        /// <returns></returns>
+        protected abstract void OnTokenStateChange();
 
+        protected bool GetStatus()
+        {
+            switch (Communication.Incomming.Command)
+            {
+                case Tokens.Communication.ETokenCommands.HasToken:
+                    return hasToken;
+                case Tokens.Communication.ETokenCommands.Exists:
+                    return true;
+                    case Tokens.Communication.ETokenCommands.TransferToken:
+                    return true;
+                    case Tokens.Communication.ETokenCommands.RetractToken:
+                    return true;
+                default:
+                    throw new ArgumentException("should never happen");
+            }
+        }
     }
 }
